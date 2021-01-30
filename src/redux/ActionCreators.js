@@ -232,7 +232,7 @@ export const requestLogin = (creds) => {
     });
 }
 
-export const loginSuccess = (token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserProfileImg) => {
+export const loginSuccess = (token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserEmailVerified, currentUserProfileImg) => {
     return({
         type: ActionTypes.LOGIN_SUCCESS,
         token,
@@ -240,6 +240,7 @@ export const loginSuccess = (token, firebase_token, currentUser, currentUserId, 
         currentUser,
         currentUserId,
         currentUserEmail,
+        currentUserEmailVerified,
         currentUserProfileImg,
     });
 }
@@ -267,6 +268,7 @@ export const loginUser = (creds, history, from) => async (dispatch) => {
         const currentUser = res.data.user.username;
         const currentUserId = res.data.user.id;
         const currentUserEmail = res.data.user.email;
+        const currentUserEmailVerified = res.data.user.email_verified;
         const currentUserProfileImg = res.data.user.profile.profileImg;
 
         localStorage.setItem('token', token);
@@ -274,9 +276,10 @@ export const loginUser = (creds, history, from) => async (dispatch) => {
         localStorage.setItem('currentUser', currentUser);
         localStorage.setItem('currentUserId', currentUserId);
         localStorage.setItem('currentUserEmail', currentUserEmail);
+        localStorage.setItem('currentUserEmailVerified', currentUserEmailVerified);
         localStorage.setItem('currentUserProfileImg', currentUserProfileImg);
         localStorage.setItem('currentUserRoomKeys', "[]");
-        dispatch(loginSuccess(token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserProfileImg));
+        dispatch(loginSuccess(token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserEmailVerified, currentUserProfileImg));
         history.replace(from); //redirecting back to where it was
         //dispatch(fetchUser(token, currentUser));
     })
@@ -377,6 +380,7 @@ const roomsReset = () => ({
 export const logout = () => (dispatch) => {
     dispatch(requestLogout());
 
+    //logging out from chat rooms
     const currentUserRoomKeys = JSON.parse(localStorage.getItem('currentUserRoomKeys'));
     if(currentUserRoomKeys) {
         let len = currentUserRoomKeys.length;
@@ -461,14 +465,16 @@ export const signupUser = (creds) => async (dispatch) => {
         const currentUser = res.data.user.username;
         const currentUserId = res.data.user.id;
         const currentUserEmail = res.data.user.email;
+        const currentUserEmailVerified = res.data.user.email_verified;
 
         localStorage.setItem('token', token);
         localStorage.setItem('firebase_token', firebase_token);
         localStorage.setItem('currentUser', currentUser);
         localStorage.setItem('currentUserId', currentUserId);
         localStorage.setItem('currentUserEmail', currentUserEmail);
+        localStorage.setItem('currentUserEmailVerified', currentUserEmailVerified);
         localStorage.setItem('currentUserRoomKeys', "[]");
-        dispatch(loginSuccess(token, firebase_token, currentUser, currentUserId, currentUserEmail));
+        dispatch(loginSuccess(token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserEmailVerified));
         window.location.reload();
         //dispatch(fetchUser(token, currentUser));
         //dispatch(checkAuthTimeout(3600));
