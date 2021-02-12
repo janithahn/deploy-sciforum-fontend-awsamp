@@ -78,6 +78,7 @@ export const editPost = (post, setSnackMessage, setSnackOpen) => (dispatch, getS
         title: post.title,
         body: post.body,
         tags: post.tags,
+        label: post.label,
     },{
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
@@ -188,6 +189,16 @@ export const fetchMyPosts = (ownerId, page) => async (dispatch) => {
     .then(myposts => dispatch(addMyPosts(myposts.data)))
     .catch(error => {
         console.log(error);
+        dispatch(myPostsFailed(error));
+    });
+}
+
+export const fetchMyPostsByUsername = (username, page) => (dispatch) => {
+    dispatch(myPostsLoading());
+
+    axios.get(baseUrl + `/api/?ordering=-created_at&owner__username=${username}&page=${page}`)
+    .then(myposts => dispatch(addMyPosts(myposts.data)))
+    .catch(error => {
         dispatch(myPostsFailed(error));
     });
 }
@@ -608,11 +619,28 @@ export const updateUserAboutMe = (auth, aboutMe) => (dispatch) => {
     })
 }
 
+//updating profile image
+export const profileImageUpateLoading = () => ({
+    type: ActionTypes.UPDATE_PROFILE_IMAGE_LOADING
+});
+
+export const profileImageUpateFailed = (errmess) => ({
+    type: ActionTypes.UPDATE_PROFILE_IMAGE_FAILED,
+    payload: errmess
+});
+
+export const profileImageUpateSuccess = (data) => ({
+    type: ActionTypes.UPDATE_PROFILE_IMAGE_FAILED,
+    payload: data
+});
+
 export const updateUserProfileImage = (auth, profileImage, usernameFromTheUrl) => (dispatch) => {
     const headers = {
         'Content-Type': 'multipart/form-data',
         'Authorization': localStorage.getItem('token') !== null ? "JWT " + localStorage.getItem('token'): undefined
     }
+
+    dispatch(profileImageUpateLoading());
 
     axios.patch(baseUrl + `/profile_api/${auth.currentUserId}/`, profileImage,
     {
@@ -621,10 +649,11 @@ export const updateUserProfileImage = (auth, profileImage, usernameFromTheUrl) =
     .then(res => {
         console.log(res);
         localStorage.setItem("currentUserProfileImg", res.data.profileImg);
+        dispatch(profileImageUpateSuccess(res.data));
         dispatch(fetchUser(null, usernameFromTheUrl));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(profileImageUpateFailed(error));
     })
 }
 
@@ -1060,7 +1089,11 @@ export const addPostComments = (postComments) => ({
     payload: postComments
 });
 
-export const updatePostComments = (comment, commetId, postId) => (dispatch) => {
+export const postcommentChange = () => ({
+    type: ActionTypes.POST_COMMENT_CHANGE,
+});
+
+export const updatePostComments = (comment, commetId) => (dispatch) => {
     
     axios.patch(baseUrl + `/comment_api/post_comment_create/${commetId}/`, comment,
     {
@@ -1068,14 +1101,14 @@ export const updatePostComments = (comment, commetId, postId) => (dispatch) => {
     })
     .then(res => {
         console.log(res);
-        dispatch(fetchPostComments(postId));
+        dispatch(postcommentChange());
     })
     .catch(error => {
         console.log(error);
     })
 }
 
-export const createPostComments = (comment, postId) => (dispatch) => {
+export const createPostComments = (comment) => (dispatch) => {
     
     axios.post(baseUrl + `/comment_api/post_comment_create/`, comment,
     {
@@ -1083,14 +1116,14 @@ export const createPostComments = (comment, postId) => (dispatch) => {
     })
     .then(res => {
         console.log(res);
-        dispatch(fetchPostComments(postId));
+        dispatch(postcommentChange());
     })
     .catch(error => {
         console.log(error);
     })
 }
 
-export const deletePostComments = (commentId, postId) => (dispatch) => {
+export const deletePostComments = (commentId) => (dispatch) => {
     
     axios.delete(baseUrl + `/comment_api/post_comment_create/${commentId}/`,
     {
@@ -1098,7 +1131,7 @@ export const deletePostComments = (commentId, postId) => (dispatch) => {
     })
     .then(res => {
         console.log(res);
-        dispatch(fetchPostComments(postId));
+        dispatch(postcommentChange());
     })
     .catch(error => {
         console.log(error);
@@ -1152,7 +1185,11 @@ export const addAnswerComments = (answerComments) => ({
     payload: answerComments,
 });
 
-export const updateAnswerComments = (comment, commetId, id) => (dispatch) => {
+export const answercommentChange = () => ({
+    type: ActionTypes.ANSWER_COMMENT_CHANGE,
+});
+
+export const updateAnswerComments = (comment, commetId) => (dispatch) => {
     
     axios.patch(baseUrl + `/comment_api/answer_comment_create/${commetId}/`, comment,
     {
@@ -1160,14 +1197,14 @@ export const updateAnswerComments = (comment, commetId, id) => (dispatch) => {
     })
     .then(res => {
         console.log(res);
-        dispatch(fetchAnswerComments(id));
+        dispatch(answercommentChange());
     })
     .catch(error => {
         console.log(error);
     })
 }
 
-export const createAnswerComments = (comment, id) => (dispatch) => {
+export const createAnswerComments = (comment) => (dispatch) => {
     
     axios.post(baseUrl + `/comment_api/answer_comment_create/`, comment,
     {
@@ -1175,14 +1212,14 @@ export const createAnswerComments = (comment, id) => (dispatch) => {
     })
     .then(res => {
         console.log(res);
-        dispatch(fetchAnswerComments(id));
+        dispatch(answercommentChange());
     })
     .catch(error => {
         console.log(error);
     })
 }
 
-export const deleteAnswerComments = (commentId, id) => (dispatch) => {
+export const deleteAnswerComments = (commentId) => (dispatch) => {
     
     axios.delete(baseUrl + `/comment_api/answer_comment_create/${commentId}/`,
     {
@@ -1190,7 +1227,7 @@ export const deleteAnswerComments = (commentId, id) => (dispatch) => {
     })
     .then(res => {
         console.log(res);
-        dispatch(fetchAnswerComments(id));
+        dispatch(answercommentChange());
     })
     .catch(error => {
         console.log(error);
@@ -1245,10 +1282,25 @@ export const updateUserProfile = (auth, aboutMe) => (dispatch) => {
 }
 
 //ANSWER
-export const fetchAnswers = (postId) => (dispatch) => {
+export const fetchAnswers = (postId, ordering, answerId) => (dispatch) => {
     dispatch(answersLoading());
 
-    axios.get(baseUrl + `/answer_api/?postBelong=${postId}`, {
+    axios.get(baseUrl + `/answer_api/?ordering=${ordering}&postBelong=${postId}&answer=${answerId}`, {
+        "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
+    })
+    .then(answers => {
+        dispatch(addAnswers(answers.data));
+    })
+    .catch(error => {
+        console.log(error);
+        dispatch(answersFailed(error));
+    });
+}
+
+export const fetchAnswersForPagination = (postId, ordering, pageNum) => (dispatch) => {
+    dispatch(answersLoading());
+
+    axios.get(baseUrl + `/answer_api/?ordering=${ordering}&postBelong=${postId}&page=${pageNum}`, {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(answers => 
@@ -1278,6 +1330,20 @@ export const addAnswers = (answers) => ({
     payload: answers
 });
 
+export const answerCreated = (data) => ({
+    type: ActionTypes.ANSWER_CREATED,
+    payload: data
+});
+
+export const answerDeleted = () => ({
+    type: ActionTypes.ANSWER_DELETED,
+});
+
+export const answerUpdated = (data) => ({
+    type: ActionTypes.ANSWER_UPDATED,
+    payload: data
+});
+
 export const postAnswer = (postBelong, owner, answerContent) => (dispatch) => {
     axios.post(baseUrl + `/answer_api/answer/create/`, {
         postBelong: postBelong,
@@ -1285,12 +1351,12 @@ export const postAnswer = (postBelong, owner, answerContent) => (dispatch) => {
         answerContent: answerContent,
     }, headerWithToken)
     .then(response => {
-        console.log(response);
-        dispatch(fetchAnswers(postBelong));
+        dispatch(answerCreated(JSON.parse(response.data)[0].pk));
+        //dispatch(fetchAnswers(postBelong));
     })
     .catch(error => {
         console.log(error);
-        //dispatch(answersFailed(error));
+        dispatch(answersFailed(error));
     });
 }
 
@@ -1300,23 +1366,22 @@ export const updateAnswer = (id, postBelong, answerContent) => (dispatch) => {
     }, headerWithToken)
     .then(response => {
         console.log(response);
-        dispatch(fetchAnswers(postBelong));
+        dispatch(answerUpdated(JSON.parse(response.data)[0].pk));
+        //dispatch(fetchAnswers(postBelong));
     })
     .catch(error => {
-        console.log(error);
-        //dispatch(answersFailed(error));
+        dispatch(answersFailed(error));
     });
 }
 
 export const deleteAnswer = (id, postBelong) => (dispatch) => {
     axios.delete(baseUrl + `/answer_api/answer/${id}/delete/`, headerWithToken)
     .then(response => {
-        console.log(response);
-        dispatch(fetchAnswers(postBelong));
+        dispatch(answerDeleted());
+        //dispatch(fetchAnswers(postBelong));
     })
     .catch(error => {
-        console.log(error);
-        //dispatch(answersFailed(error));
+        dispatch(answersFailed(error));
     });
 }
 

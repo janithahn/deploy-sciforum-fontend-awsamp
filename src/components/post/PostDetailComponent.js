@@ -69,6 +69,7 @@ export default function PostDetail() {
         body: post.post.body,
     };
     const id = post.post.id;
+    const label = post.post.label;
     const owner = post.post.owner;
     const viewCount = post.post.viewCount;
     const created_at = post.post.created_at;
@@ -110,7 +111,7 @@ export default function PostDetail() {
 
     const handleCommentSubmit = React.useCallback(({ submitVal, setEditorState, setSubmitVal, text }) => {
         if(text.length !== 0) {
-            dispatch(createPostComments(submitVal, postId));
+            dispatch(createPostComments(submitVal));
         }
         setEditorState(() => EditorState.createEmpty());
         setSubmitVal({});
@@ -133,6 +134,7 @@ export default function PostDetail() {
                     <RenderCard 
                         title={postInfo.title} 
                         body={postInfo.body} 
+                        label={label}
                         viewCount={viewCount}
                         created_at={created_at}
                         updated_at={updated_at}

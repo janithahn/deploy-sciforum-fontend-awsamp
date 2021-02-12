@@ -1,12 +1,8 @@
 import React from 'react';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { Button, Grid, Hidden } from '@material-ui/core';
+import { useLocation } from 'react-router-dom';
 import QuestionViewCard from '../post/QuestionViewCardComponent';
-import InfiniteScroll from 'react-infinite-scroller';
 import axios from 'axios';
 import { baseUrl } from '../../shared/baseUrl'
-import HomeLoader from './skeletons/homeSkels';
-import News from '../news/news';
 import RenderPosts from './RenderPosts';
 
 export default function Search() {
@@ -50,7 +46,7 @@ export default function Search() {
         });
     }
 
-    const PostsList = postData.map((post, key) => <QuestionViewCard key={key} item={post}/>);
+    const PostsList = postData.map((post, key) => <div key={post.id}><QuestionViewCard item={post}/></div>);
 
 
     return(

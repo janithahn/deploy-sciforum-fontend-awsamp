@@ -17,6 +17,7 @@ import { Answers } from './actions/answers';
 import { ChatRooms } from './actions/chat/chatRooms';
 import { CreateChatRoom } from './actions/chat/createChatRoom';
 import { ChatMessages } from './actions/chat/chatMessages';
+import { RoomUsers } from './actions/chat/roomusers';
 import { ResetPassword, SendResetPassword } from './actions/resetPassword';
 import { ConfirmEmail, VerifyAccount } from './actions/confirmEmail';
 import { answerVotes, postVotes } from './actions/votes';
@@ -28,6 +29,8 @@ import { events, webinars } from './actions/news';
 import { TopPosts } from './actions/topposts';
 import { LikedPosts } from './actions/profilePanels/liked';
 import { MyAnswers } from './actions/profilePanels/myAnswers';
+import { MyPostsProfile } from './actions/profilePanels/myPosts';
+import { UpdateProfileImage } from './actions/profilePanels/updateProfileImage';
 import { createReduxHistoryContext, reachify } from "redux-first-history";
 import { createBrowserHistory } from 'history';
 import { globalHistory } from "@reach/router";
@@ -74,11 +77,14 @@ export const ConfigureStore = () => {
             ChatRooms,
             CreateChatRoom,
             ChatMessages,
+            RoomUsers,
             events,
             webinars,
             TopPosts,
             LikedPosts,
             MyAnswers,
+            MyPostsProfile,
+            UpdateProfileImage,
         }),
         composeEnhancers(applyMiddleware(thunk, logger, routerMiddleware))
     );

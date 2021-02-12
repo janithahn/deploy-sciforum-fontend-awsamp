@@ -15,7 +15,7 @@ import { fetchUnreadNotifications } from './actions';
 import community from './styles/community.svg';
 import MainDrawer from '../drawer/DrawerComponent';
 import ConfirmationEmailAfterSnack from '../settings/afterSnack';
-import { resetEmailConfirm } from '../settings/actionCreators';
+//import { resetEmailConfirm } from '../settings/actionCreators';
 
 function LoginModal({openModal, classes, handleModalClose}) {
     return(
@@ -187,7 +187,7 @@ const Header = (props) => {
                             <Search />
                         </div>
                         <InputBase
-                            placeholder="Search…"
+                            placeholder="Search Questions…"
                             classes={{
                                 root: props.classes.inputRoot,
                                 input: props.classes.inputInput,
