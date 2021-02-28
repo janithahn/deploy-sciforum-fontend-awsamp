@@ -1,5 +1,4 @@
 import React from 'react';
-import Avatar from '@material-ui/core/Avatar';
 import Button from '@material-ui/core/Button';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import TextField from '@material-ui/core/TextField';
@@ -25,6 +24,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useGoogleLogin } from 'react-google-login';
 import { clientId } from '../../shared/googleApiClientId';
 import { useHistory, useLocation } from 'react-router-dom';
+import { Helmet } from 'react-helmet';
 
 function Copyright() {
   return (
@@ -64,7 +64,11 @@ export default function SignIn(props) {
   React.useEffect(() => {
     if(auth.status === 'failed' && auth.errMess) {
       if(auth.errMess.response && auth.errMess.response.data) {
-        setCredentialError(auth.errMess.response.data.non_field_errors[0]);
+        if(auth.errMess.response.data.non_field_errors) {
+          setCredentialError(auth.errMess.response.data.non_field_errors[0]);
+        }else {
+          setCredentialError("Server Error! Please try again!");
+        }
       } else {
         setCredentialError('Server error! Please try again!');
       }  
@@ -116,6 +120,9 @@ export default function SignIn(props) {
 
   return (
     <ThemeProvider theme={theme}>
+      <Helmet>
+        <title>{`sciForum - Signin`}</title>
+      </Helmet>
       <Container component="main" maxWidth="xs" className={classes.content}>
         <CssBaseline />
         <div className={classes.paper}>

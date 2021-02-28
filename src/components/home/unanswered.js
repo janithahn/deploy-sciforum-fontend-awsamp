@@ -6,21 +6,22 @@ import RenderPosts from './RenderPosts';
 import { headerWithToken } from './headerWithToken';
 import { Helmet } from 'react-helmet';
 
-export default function Home() {
-    
+export default function UnansweredPosts() {
+
     const [postData, setPostData] = React.useState([]);
     const [hasMoreItems, setHasMoreItems] = React.useState(true);
     const [nextHref, setNextHref] = React.useState(null);
 
     const fetchPostInfinite = (pageNum) => {
 
-        var url = baseUrl + `/api/hot/posts/?page=${pageNum}`;
+        var url = baseUrl + `/api/unanswered/posts/?page=${pageNum}`;
         if(nextHref) {
             url = nextHref;
         }
 
         axios.get(url, headerWithToken)
         .then(posts => {
+            console.log(posts);
             if(posts.data) {
                 let tempData = postData;
                 posts.data.results.map((post) => 
@@ -40,17 +41,17 @@ export default function Home() {
         });
     }
 
-    let PostsList = postData.map((post) => <div key={post.id}><QuestionViewCard item={post}/></div>);
+    const PostsList = postData.map((post) => <div key={post.id}><QuestionViewCard item={post}/></div>);
 
     return(
         <React.Fragment>
             <Helmet>
-                <title>{`sciForum`}</title>
+                <title>{`sciForum - Unanswered`}</title>
             </Helmet>
             <RenderPosts 
                 PostsList={PostsList} 
                 fetchPostInfinite={fetchPostInfinite} 
-                hasMoreItems={hasMoreItems}
+                hasMoreItems={hasMoreItems} 
             />
         </React.Fragment>
     );

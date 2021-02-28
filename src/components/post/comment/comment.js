@@ -350,7 +350,7 @@ export function PostCommentRender() {
         setSubmitVal({});
         setEdit(false);
         setEditCommentId(undefined);
-    }, [dispatch, postId]);
+    }, [dispatch]);
 
     //Scrolling function
     const location = useLocation();
@@ -393,9 +393,8 @@ export function PostCommentRender() {
         const displayContent = EditorState.createWithContent(convertFromRaw(JSON.parse(item.comment)), decorator);
 
         return( 
-            <Grid item innerRef={refs["#pc" + item.id]}>
+            <Grid item key={item.id} innerRef={refs["#pc" + item.id]}>
                 <Comment
-                    key={item.id} 
                     classes={classes}
                     displayContent={displayContent}
                     plugins={plugins}

@@ -2,10 +2,13 @@ import React from 'react';
 import DeleteAccount from './deleteAccount';
 import ResetPassword from './resetPassword';
 import ConfirmEmail from './confirmEmail';
+import EmailSubscribe from './EmailSubscribe';
+import ModeratorSubscribe from './moderatorSubscribe';
 import { Grid, ThemeProvider } from '@material-ui/core';
 import { useSelector } from 'react-redux';
 import AfterMessage from './afterMessage';
 import { theme } from './styles/styles';
+import { Helmet } from 'react-helmet';
 
 export default function UserSettings() {
 
@@ -15,6 +18,9 @@ export default function UserSettings() {
 
     return(
         <React.Fragment>
+            <Helmet>
+                <title>{`sciForum - Settings`}</title>
+            </Helmet>
             <ThemeProvider theme={theme}>
                 <Grid container direction="column" justify="flex-start" alignItems="stretch" spacing={2}>
                     <Grid item xs={12} sm={12} md={12}>
@@ -22,6 +28,12 @@ export default function UserSettings() {
                     </Grid>
                     <Grid item xs={12} sm={12} md={12}>
                         <ResetPassword/>
+                    </Grid>
+                    <Grid item xs={12} sm={12} md={12}>
+                        <EmailSubscribe/>
+                    </Grid>
+                    <Grid item xs={12} sm={12} md={12}>
+                        <ModeratorSubscribe/>
                     </Grid>
                     <Grid item xs={12} sm={12} md={12}>
                         <DeleteAccount/>

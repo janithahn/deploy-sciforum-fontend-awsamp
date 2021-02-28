@@ -22,10 +22,10 @@ import SearchByLabel from './home/SearchByLabels';
 import FilterByDate from './home/FilterByDate';
 import FilterByVote from './home/FilterByVote';
 import FilterByHot from './home/FilterByHot';
+import UnansweredPosts from './home/unanswered';
 //import MDBCustomFooter from './footer/MDBFooterComponent';
 //import ProfileDetails from './user/ProfileComponent';
 import Account from './user/index';
-import MyPostsAccount from './user/panels/myPosts';
 import Notifications from './notifications/index';
 import UserSettings from './settings/settings';
 import jwt_decode from 'jwt-decode';
@@ -35,6 +35,7 @@ import ConfirmEmailRedirect from './settings/confirmEmailRedirect';
 // Chat App
 import RoomList from './chat/roomList';
 import ChatRoom from './chat/chatRoom';
+import ChooseInterests from './home/chooseInterestsModal';
 
 function Main(props) {
     const classes = useStyles();
@@ -48,13 +49,15 @@ function Main(props) {
     //console.log(firebaseAuth().currentUser);
 
     const isLoading = useSelector(state => [
-        state.Auth.status, state.Answers.status, state.Notifications.status, 
+        state.Auth.status, state.Answers.status, state.Answers.changeStatus, state.Notifications.status, 
         state.Post.status, state.Posts.status, state.MyPosts.status, state.User.status, 
         state.answerVotes.status, state.postVotes.status, state.PostComments.status,
         state.AnswerComments.status, state.SendResetPassword.status, state.ChatRooms.status,
         state.ChatMessages.status, state.events.status, state.webinars.status, state.AuthFirebase.status, 
         state.ConfirmEmail.status, state.VerifyAccount.status, state.MyPostsProfile.status, state.MyAnswers.status,
-        state.UpdateProfileImage.status,
+        state.UpdateProfileImage.status, state.ProfileInterests.status, state.SubscribeEmail.subscribe_status,
+        state.SubscribeEmail.unsubscribe_status, state.BecomeModerator.subscribe_status, state.BecomeModerator.subscribe_status,
+        state.UpdateUser.status, state.UpdateAnswerComment.status, state.UpdatePostComment.status,
     ].includes('loading'));
 
     const [showProgressBar, setShowProgressBar] = React.useState(false);
@@ -212,6 +215,19 @@ function Main(props) {
         )} />
     );
 
+    //choose interests
+    const [openInterestsModal, setOpenInterestsModal] = React.useState(false);
+
+    const handleOpen = () => {
+        setOpenInterestsModal(true);
+    };
+
+    React.useEffect(() => {
+        if(auth.has_interests && auth.has_interests.toString() === "false") {
+            handleOpen();
+        }
+    }, [auth]);
+
     return (
         <div>
             <Header classes={classes} showProgressBar={showProgressBar} snackOpen={snackOpen} setSnackOpen={setSnackOpen} snackMessage={snackMessage}/>
@@ -228,6 +244,7 @@ function Main(props) {
                     <Route exact path="/home/filter/latest" component={() => <FilterByDate/>}/>
                     <Route exact path="/home/filter/by_vote" component={() => <FilterByVote/>}/>
                     <Route exact path="/home/filter/by_hot" component={() => <FilterByHot/>}/>
+                    <Route exact path="/unanswered" component={() => <UnansweredPosts/>}/>
 
                     <PrivateRoutPostEdit path="/posts/:postId/edit" component={() => <EditPost setSnackMessage={setSnackMessage} setSnackOpen={setSnackOpen}/>}/>
                     <PrivateRouteMyPosts exact path="/myposts" component={() => <MyPosts/>}/>
@@ -242,8 +259,8 @@ function Main(props) {
                     <PrivateRouteSettings path="/settings" component={() => <UserSettings/>}/>
                     <Route exact path="/googlelogin" component={() => <GoogleSocialAuth/>}/>
                     
-                    <PrivateAccountConfirmRoute exact path="/password/reset" component={() => <PasswordReset/>}/>
-                    <PrivateAccountConfirmRoute exact path="/users/profile/password_reset/confirm/:token" component={() => <ResetConfirm/>}/>
+                    <Route exact path="/password/reset" component={() => <PasswordReset/>}/>
+                    <Route exact path="/users/profile/password_reset/confirm/:token" component={() => <ResetConfirm/>}/>
                     <PrivateAccountConfirmRoute exact path="/verify-email/:token" component={() => <ConfirmEmailRedirect/>}/>
 
                     <PrivateChatRoute exact path="/chatrooms" component={() => <RoomList/>}/>
@@ -254,6 +271,7 @@ function Main(props) {
                 </Switch>
             </main>
             {(location.pathname !== '/signup' && location.pathname !== '/signin') ? <Footer/>: undefined}
+            {auth.isAuthenticated ? <ChooseInterests open={openInterestsModal} setOpen={setOpenInterestsModal}/>: undefined}
         </div>
     );
 }

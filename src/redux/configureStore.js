@@ -12,6 +12,8 @@ import { UserEducation } from './actions/credentials/education';
 import { UserLanguages } from './actions/credentials/languages';
 import { UserSkills } from './actions/credentials/skills';
 import { UserContact } from './actions/credentials/contact';
+import { UserInterests } from './actions/credentials/interests';
+import { UpdateUser } from './actions/profilePanels/updateUser'
 import { Post } from './actions/post';
 import { Answers } from './actions/answers';
 import { ChatRooms } from './actions/chat/chatRooms';
@@ -24,13 +26,16 @@ import { answerVotes, postVotes } from './actions/votes';
 import { answerCommentVotes, postCommentVotes } from './actions/commentVotes';
 import { Notifications, UnreadNotifications } from './actions/notifications';
 import { MyPosts } from './actions/myposts';
-import { PostComments, AnswerComments } from './actions/comments';
+import { PostComments, AnswerComments, UpdatePostComment, UpdateAnswerComment } from './actions/comments';
 import { events, webinars } from './actions/news';
 import { TopPosts } from './actions/topposts';
 import { LikedPosts } from './actions/profilePanels/liked';
 import { MyAnswers } from './actions/profilePanels/myAnswers';
 import { MyPostsProfile } from './actions/profilePanels/myPosts';
 import { UpdateProfileImage } from './actions/profilePanels/updateProfileImage';
+import { ProfileInterests } from './actions/profileInterests';
+import { BecomeModerator } from './actions/moderator';
+import { SubscribeEmail } from './actions/emailSubscribe';
 import { createReduxHistoryContext, reachify } from "redux-first-history";
 import { createBrowserHistory } from 'history';
 import { globalHistory } from "@reach/router";
@@ -68,6 +73,7 @@ export const ConfigureStore = () => {
             UserLanguages,
             UserSkills,
             UserContact,
+            UserInterests,
             PostComments,
             AnswerComments,
             ResetPassword,
@@ -85,6 +91,12 @@ export const ConfigureStore = () => {
             MyAnswers,
             MyPostsProfile,
             UpdateProfileImage,
+            ProfileInterests,
+            BecomeModerator,
+            SubscribeEmail,
+            UpdateUser,
+            UpdatePostComment,
+            UpdateAnswerComment,
         }),
         composeEnhancers(applyMiddleware(thunk, logger, routerMiddleware))
     );

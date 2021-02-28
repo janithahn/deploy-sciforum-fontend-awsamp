@@ -28,7 +28,6 @@ export const fetchPosts = (pageNum, setNextHref, setHasMoreItems, nextHref) => a
         }
     })
     .catch(error => {
-        console.log(error);
         dispatch(postsFailed(error));
     });
 }
@@ -52,7 +51,6 @@ export const addPosts = (posts) => ({
 });
 
 export const postPost = (post, setSnackMessage, setSnackOpen) => (dispatch, getState) => {
-    console.log(getState());
     axios.post(baseUrl + '/api/post/create/', 
     post,
     {
@@ -73,7 +71,6 @@ export const postPost = (post, setSnackMessage, setSnackOpen) => (dispatch, getS
 };
 
 export const editPost = (post, setSnackMessage, setSnackOpen) => (dispatch, getState) => {
-    console.log(post);
     axios.patch(baseUrl + `/api/post/${post.id}/update/`, {
         title: post.title,
         body: post.body,
@@ -83,14 +80,12 @@ export const editPost = (post, setSnackMessage, setSnackOpen) => (dispatch, getS
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
         console.log("Question updated successfully!");
         setSnackMessage("Question updated successfully");
         setSnackOpen(true);
         dispatch(fetchPostDetail(post.id));
     })
     .catch(error => {
-        console.log(error);
         setSnackMessage("Error updating the quesition!");
         setSnackOpen(true);
     });
@@ -100,7 +95,6 @@ export const deletePost = (postId, history) => (dispatch, getState) => {
     axios.delete(baseUrl + `/api/post/${postId}/delete/`, headerWithToken)
     .then(res => {
         dispatch(fetchPosts());
-        console.log(res);
         console.log("Question deleted successfully!");
         history.push('/questions');
     })
@@ -113,12 +107,10 @@ export const fetchPostDetail = (postId) => async (dispatch) => {
 
     await axios.get(baseUrl + `/api/${postId}/`)
     .then(response => {
-        //console.log(response);
         return response;
     })
     .then(post => dispatch(addPost(post.data)))
     .catch(error => {
-        console.log(error);
         dispatch(postFailed(error));
     });
 }
@@ -153,7 +145,6 @@ export const UploadPostImages = (imgData)  => async (dispatch) => {
     })
     .then(res => dispatch(addPostImages(res.data.data)))
     .catch(error => {
-        console.log(error);
         dispatch(postImagesFailed(error));
     });
 
@@ -183,12 +174,10 @@ export const fetchMyPosts = (ownerId, page) => async (dispatch) => {
 
     axios.get(baseUrl + `/api/?ordering=-created_at&owner=${ownerId}&page=${page}`)
     .then(response => {
-        //console.log(response);
         return response;
     })
     .then(myposts => dispatch(addMyPosts(myposts.data)))
     .catch(error => {
-        console.log(error);
         dispatch(myPostsFailed(error));
     });
 }
@@ -220,17 +209,13 @@ export const addMyPosts = (posts) => ({
 //REFRESH TOKEN
 export const getNewToken = (currentToken) => (dispatch) => {
 
-    console.log({token: currentToken});
-
     axios.post(baseUrl + '/api-jwt-token-refresh/', {
         token: currentToken
     })
     .then(res => {
-        console.log(res);
         localStorage.setItem('token', res.data.token);
     })
     .catch(error => {
-        console.log(error);
         dispatch(logout());
     });
 }
@@ -243,7 +228,7 @@ export const requestLogin = (creds) => {
     });
 }
 
-export const loginSuccess = (token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserEmailVerified, currentUserProfileImg) => {
+export const loginSuccess = (token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserEmailVerified, is_email_subscribed, has_interests, currentUserProfileImg, currentUserRole) => {
     return({
         type: ActionTypes.LOGIN_SUCCESS,
         token,
@@ -252,7 +237,10 @@ export const loginSuccess = (token, firebase_token, currentUser, currentUserId, 
         currentUserId,
         currentUserEmail,
         currentUserEmailVerified,
+        has_interests,
         currentUserProfileImg,
+        currentUserRole,
+        is_email_subscribed,
     });
 }
 
@@ -273,7 +261,6 @@ export const loginUser = (creds, history, from) => async (dispatch) => {
         //rememberMe: creds.rememberMe,
     })
     .then(res => {
-        console.log(res);
         const token = res.data.token;
         const firebase_token = res.data.firebase_token;
         const currentUser = res.data.user.username;
@@ -281,6 +268,9 @@ export const loginUser = (creds, history, from) => async (dispatch) => {
         const currentUserEmail = res.data.user.email;
         const currentUserEmailVerified = res.data.user.email_verified;
         const currentUserProfileImg = res.data.user.profile.profileImg;
+        const currentUserRole = res.data.user.profile.userRole;
+        const has_interests = res.data.user.has_interests;
+        const is_email_subscribed = res.data.user.profile.is_email_subscribed;
 
         localStorage.setItem('token', token);
         localStorage.setItem('firebase_token', firebase_token);
@@ -289,8 +279,11 @@ export const loginUser = (creds, history, from) => async (dispatch) => {
         localStorage.setItem('currentUserEmail', currentUserEmail);
         localStorage.setItem('currentUserEmailVerified', currentUserEmailVerified);
         localStorage.setItem('currentUserProfileImg', currentUserProfileImg);
+        localStorage.setItem('currentUserRole', currentUserRole);
         localStorage.setItem('currentUserRoomKeys', "[]");
-        dispatch(loginSuccess(token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserEmailVerified, currentUserProfileImg));
+        localStorage.setItem('has_interests', has_interests);
+        localStorage.setItem('is_email_subscribed', is_email_subscribed);
+        dispatch(loginSuccess(token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserEmailVerified, is_email_subscribed, has_interests, currentUserProfileImg, currentUserRole));
         history.replace(from); //redirecting back to where it was
         //dispatch(fetchUser(token, currentUser));
     })
@@ -341,12 +334,10 @@ export const firebaseLoginUser = (access_token) => async (dispatch) => {
 
     auth().signInWithCustomToken(access_token)
     .then((user) => {
-        console.log("FIREBASE_SUCCESS:", user);
         dispatch(firebaseLoginSuccess(user));
         localStorage.setItem('firebase_user', user)
     })
     .catch((error) => {
-        console.log("FIREBASE_ERROR:", error);
         dispatch(firebaseLoginError(error));
     });
 
@@ -460,7 +451,6 @@ export const logout = () => (dispatch) => {
 
 //SIGNUP
 export const signupUser = (creds) => async (dispatch) => {
-    //console.log(creds);
     dispatch(requestLogin(creds));
 
     await axios.post(baseUrl + '/jwtregister/', {
@@ -470,13 +460,14 @@ export const signupUser = (creds) => async (dispatch) => {
         email: creds.email
     })
     .then(res => {
-        console.log(res);
         const token = res.data.token;
         const firebase_token = res.data.firebase_token;
         const currentUser = res.data.user.username;
         const currentUserId = res.data.user.id;
         const currentUserEmail = res.data.user.email;
         const currentUserEmailVerified = res.data.user.email_verified;
+        const has_interests = res.data.user.has_interests;
+        const is_email_subscribed = res.data.user.is_email_subscribed;
 
         localStorage.setItem('token', token);
         localStorage.setItem('firebase_token', firebase_token);
@@ -484,14 +475,15 @@ export const signupUser = (creds) => async (dispatch) => {
         localStorage.setItem('currentUserId', currentUserId);
         localStorage.setItem('currentUserEmail', currentUserEmail);
         localStorage.setItem('currentUserEmailVerified', currentUserEmailVerified);
+        localStorage.setItem('has_interests', has_interests);
         localStorage.setItem('currentUserRoomKeys', "[]");
-        dispatch(loginSuccess(token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserEmailVerified));
+        localStorage.setItem('is_email_subscribed', is_email_subscribed);
+        dispatch(loginSuccess(token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserEmailVerified, is_email_subscribed, has_interests));
         window.location.reload();
         //dispatch(fetchUser(token, currentUser));
         //dispatch(checkAuthTimeout(3600));
     })
     .catch(error => {
-        console.log(error);
         dispatch(loginError(error));
     });
 }
@@ -520,14 +512,16 @@ export const loginUserWithGoogle = (creds, history, from) => async (dispatch) =>
         //rememberMe: creds.rememberMe,
     })
     .then(res => {
-        console.log(res);
         const googleToken = creds.tokenObj.access_token;
         const token = res.data.token;
         const firebase_token = res.data.firebase_token;
         const currentUser = res.data.user.username;
         const currentUserId = res.data.user.id;
         const currentUserEmail = res.data.user.email;
+        const currentUserRole = res.data.user.role;
         const currentUserProfileImg = creds.profileObj.imageUrl;
+        const has_interests = res.data.user.has_interests;
+        const is_email_subscribed = res.data.user.is_email_subscribed;
 
         localStorage.setItem('googleToken', googleToken);
         localStorage.setItem('token', token);
@@ -535,9 +529,13 @@ export const loginUserWithGoogle = (creds, history, from) => async (dispatch) =>
         localStorage.setItem('currentUser', currentUser);
         localStorage.setItem('currentUserId', currentUserId);
         localStorage.setItem('currentUserEmail', currentUserEmail);
+        localStorage.setItem('currentUserEmailVerified', true);
+        localStorage.setItem('currentUserRole', currentUserRole);
         localStorage.setItem('currentUserProfileImg', currentUserProfileImg);
         localStorage.setItem('currentUserRoomKeys', "[]");
-        dispatch(loginSuccess(token, firebase_token, currentUser, currentUserId, currentUserEmail, currentUserProfileImg));
+        localStorage.setItem('has_interests', has_interests);
+        localStorage.setItem('is_email_subscribed', is_email_subscribed);
+        dispatch(loginSuccess(token, firebase_token, currentUser, currentUserId, currentUserEmail, true, is_email_subscribed, has_interests, currentUserProfileImg, currentUserRole));
         history.replace(from); //redirecting back to where it was
         window.location.reload();
         //dispatch(fetchUser(token, currentUser));
@@ -554,13 +552,10 @@ export const fetchUser = (token, currentUser) => (dispatch) => {
 
     //dispatch(getNewToken(localStorage.getItem('token')));
 
-    //console.log(localStorage.getItem('token'));
-
     return axios.get(baseUrl + `/users/${currentUser}/`, {
         "headers": localStorage.getItem('token') && isJWTExpired(localStorage.getItem('token')) ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res.data);
         dispatch(addUser(res.data));
         //localStorage.setItem("currentUserProfileImg", res.data.profile.profileImg);
     })
@@ -583,7 +578,23 @@ export const addUser = (user) => ({
     payload: user
 });
 
+const updateUserLoading = () => ({
+    type: ActionTypes.UPDATE_USER_LOADING
+});
+
+const updateUserSuccess = (data) => ({
+    type: ActionTypes.UPDATE_USER_SUCCESS,
+    payload: data
+});
+
+const updateUserFailed = (error) => ({
+    type: ActionTypes.UPDATE_USER_FAILED,
+    payload: error
+});
+
 export const updateUser = (auth, firstname, lastname, aboutMe) => (dispatch) => {
+    dispatch(updateUserLoading());
+
     axios.patch(baseUrl + `/users/${auth.currentUser}/update/`, {
         first_name: firstname,
         last_name: lastname,
@@ -595,14 +606,16 @@ export const updateUser = (auth, firstname, lastname, aboutMe) => (dispatch) => 
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
 export const updateUserAboutMe = (auth, aboutMe) => (dispatch) => {
+    dispatch(updateUserLoading());
+
     axios.patch(baseUrl + `/users/${auth.currentUser}/update/`, {
         profile: {
             aboutMe: aboutMe,
@@ -612,10 +625,10 @@ export const updateUserAboutMe = (auth, aboutMe) => (dispatch) => {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
@@ -647,7 +660,6 @@ export const updateUserProfileImage = (auth, profileImage, usernameFromTheUrl) =
         "headers": headers
     })
     .then(res => {
-        console.log(res);
         localStorage.setItem("currentUserProfileImg", res.data.profileImg);
         dispatch(profileImageUpateSuccess(res.data));
         dispatch(fetchUser(null, usernameFromTheUrl));
@@ -658,6 +670,8 @@ export const updateUserProfileImage = (auth, profileImage, usernameFromTheUrl) =
 }
 
 export const updateUserContact = (auth, contact) => (dispatch) => {
+    dispatch(updateUserLoading());
+
     axios.patch(baseUrl + `/users/${auth.currentUser}/update/`, {
         contact
     },
@@ -665,14 +679,28 @@ export const updateUserContact = (auth, contact) => (dispatch) => {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
 //USER_EMPLOYMENT
+export const userEmploymentLoading = () => ({
+    type: ActionTypes.USER_EMPLOYMENT_LOADING
+});
+
+export const addUserEmployment = (data) => ({
+    type: ActionTypes.ADD_USER_EMPLOYMENT,
+    payload: data
+});
+
+export const userEmploymentFailed = (error) => ({
+    type: ActionTypes.USER_EMPLOYMENT_FAILED,
+    payload: error
+});
+
 export const fetchUserEmployment = (requestUsername) => (dispatch) => {
     dispatch(userEmploymentLoading());
 
@@ -681,71 +709,58 @@ export const fetchUserEmployment = (requestUsername) => (dispatch) => {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
         dispatch(addUserEmployment(res.data));
     })
     .catch(error => {
-        console.log(error);
         dispatch(userEmploymentFailed(error));
     })
 } 
 
-export const userEmploymentLoading = () => ({
-    type: ActionTypes.USER_EMPLOYMENT_LOADING
-});
-
-export const userEmploymentFailed = (errmess) => ({
-    type: ActionTypes.USER_EMPLOYMENT_FAILED,
-    payload: errmess
-});
-
-export const addUserEmployment = (userEmployment) => ({
-    type: ActionTypes.ADD_USER_EMPLOYMENT,
-    payload: userEmployment
-});
-
 export const updateUserEmployment = (employment, id) => (dispatch) => {
+    dispatch(updateUserLoading());
     
     axios.patch(baseUrl + `/profile_api/user_employment_edit/viewset/${id}/`, employment,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserEmployment(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
 export const createUserEmployment = (employment) => (dispatch) => {
+    dispatch(updateUserLoading());
     
     axios.post(baseUrl + `/profile_api/user_employment_edit/viewset/`, employment,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserEmployment(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
 export const deleteUserEmployment = (employmentId) => (dispatch) => {
+    dispatch(updateUserLoading());
     
     axios.delete(baseUrl + `/profile_api/user_employment_edit/viewset/${employmentId}/`,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserEmployment(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
@@ -758,11 +773,9 @@ export const fetchUserEducation = (requestUsername) => (dispatch) => {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
         dispatch(addUserEducation(res.data));
     })
     .catch(error => {
-        console.log(error);
         dispatch(userEducationFailed(error));
     })
 } 
@@ -782,47 +795,50 @@ export const addUserEducation = (userEducation) => ({
 });
 
 export const updateUserEducation = (education, id) => (dispatch) => {
+    dispatch(updateUserLoading());
     
     axios.patch(baseUrl + `/profile_api/user_education_edit/viewset/${id}/`, education,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserEducation(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
 export const createUserEducation = (education) => (dispatch) => {
+    dispatch(updateUserLoading());
     
     axios.post(baseUrl + `/profile_api/user_education_edit/viewset/`, education,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserEducation(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
 export const deleteUserEducation = (educationId) => (dispatch) => {
+    dispatch(updateUserLoading());
     
     axios.delete(baseUrl + `/profile_api/user_education_edit/viewset/${educationId}/`,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserEducation(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
@@ -835,11 +851,9 @@ export const fetchUserSkills = (requestUsername) => (dispatch) => {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
         dispatch(addUserSkills(res.data));
     })
     .catch(error => {
-        console.log(error);
         dispatch(userSkillsFailed(error));
     })
 } 
@@ -859,126 +873,52 @@ export const addUserSkills = (userSkills) => ({
 });
 
 export const updateUserSkills = (skills, id) => (dispatch) => {
+    dispatch(updateUserLoading());
     
     axios.patch(baseUrl + `/profile_api/user_skills_edit/viewset/${id}/`, skills,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserSkills(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
 export const createUserSkills = (skills) => (dispatch) => {
+    dispatch(updateUserLoading());
     
     axios.post(baseUrl + `/profile_api/user_skills_edit/viewset/`, skills,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserSkills(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
 export const deleteUserSkills = (skillId) => (dispatch) => {
+    dispatch(updateUserLoading());
     
     axios.delete(baseUrl + `/profile_api/user_skills_edit/viewset/${skillId}/`,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserSkills(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
-
-//USER_CONTACT
-/*export const fetchUserContact = (requestUsername) => (dispatch) => {
-    dispatch(userContactLoading());
-
-    axios.get(baseUrl + `/profile_api/user_contact/viewset/?username=${requestUsername}`,
-    {
-        "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
-    })
-    .then(res => {
-        console.log(res);
-        dispatch(addUserContact(res.data));
-    })
-    .catch(error => {
-        console.log(error);
-        dispatch(userContactFailed(error));
-    })
-} 
-
-export const userContactLoading = () => ({
-    type: ActionTypes.USER_EDUCATION_LOADING
-});
-
-export const userContactFailed = (errmess) => ({
-    type: ActionTypes.USER_EDUCATION_FAILED,
-    payload: errmess
-});
-
-export const addUserContact = (userContact) => ({
-    type: ActionTypes.ADD_USER_EDUCATION,
-    payload: userContact
-});
-
-export const updateUserContact = (contact, id) => (dispatch) => {
-    
-    axios.patch(baseUrl + `/profile_api/user_contact_edit/viewset/${id}/`, contact,
-    {
-        "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
-    })
-    .then(res => {
-        console.log(res);
-        dispatch(fetchUserContact(localStorage.getItem('currentUser')));
-    })
-    .catch(error => {
-        console.log(error);
-    })
-}
-
-export const createUserContact = (contact) => (dispatch) => {
-    
-    axios.post(baseUrl + `/profile_api/user_contact_edit/viewset/`, contact,
-    {
-        "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
-    })
-    .then(res => {
-        console.log(res);
-        dispatch(fetchUserContact(localStorage.getItem('currentUser')));
-    })
-    .catch(error => {
-        console.log(error);
-    })
-}
-
-export const deleteUserContact = (contactId) => (dispatch) => {
-    
-    axios.delete(baseUrl + `/profile_api/user_contact_edit/viewset/${contactId}/`,
-    {
-        "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
-    })
-    .then(res => {
-        console.log(res);
-        dispatch(fetchUserContact(localStorage.getItem('currentUser')));
-    })
-    .catch(error => {
-        console.log(error);
-    })
-}*/
 
 //USER_LANGUAGES
 export const fetchUserLanguages = (requestUsername) => (dispatch) => {
@@ -989,11 +929,9 @@ export const fetchUserLanguages = (requestUsername) => (dispatch) => {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
         dispatch(addUserLanguages(res.data));
     })
     .catch(error => {
-        console.log(error);
         dispatch(userLanguagesFailed(error));
     })
 } 
@@ -1013,49 +951,82 @@ export const addUserLanguages = (userLanguages) => ({
 });
 
 export const updateUserLanguages = (languages, id) => (dispatch) => {
+    dispatch(updateUserLoading());
     
     axios.patch(baseUrl + `/profile_api/user_languages_edit/viewset/${id}/`, languages,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserLanguages(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
 export const createUserLanguages = (languages) => (dispatch) => {
+    dispatch(updateUserLoading());
     
     axios.post(baseUrl + `/profile_api/user_languages_edit/viewset/`, languages,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserLanguages(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
 export const deleteUserLanguages = (languageId) => (dispatch) => {
-    
+    dispatch(updateUserLoading());
+
     axios.delete(baseUrl + `/profile_api/user_languages_edit/viewset/${languageId}/`,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
         dispatch(fetchUserLanguages(localStorage.getItem('currentUser')));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
+
+//USER_INTERESTS
+export const fetchUserInterests = (requestUsername) => (dispatch) => {
+    dispatch(userInterestsLoading());
+
+    axios.get(baseUrl + `/profile_api/user_interests/viewset/?username=${requestUsername}`,
+    {
+        "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
+    })
+    .then(res => {
+        dispatch(addUserInterests(res.data));
+    })
+    .catch(error => {
+        dispatch(userInterestsFailed(error));
+    })
+} 
+
+export const userInterestsLoading = () => ({
+    type: ActionTypes.USER_INTERESTS_LOADING
+});
+
+export const userInterestsFailed = (errmess) => ({
+    type: ActionTypes.USER_INTERESTS_FAILED,
+    payload: errmess
+});
+
+export const addUserInterests = (data) => ({
+    type: ActionTypes.ADD_USER_INTERESTS,
+    payload: data
+});
 
 //POST COMMENTS
 export const fetchPostComments = (postId) => (dispatch) => {
@@ -1066,11 +1037,9 @@ export const fetchPostComments = (postId) => (dispatch) => {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
         dispatch(addPostComments(res.data));
     })
     .catch(error => {
-        console.log(error);
         dispatch(postCommentsFailed(error));
     });
 }
@@ -1093,48 +1062,65 @@ export const postcommentChange = () => ({
     type: ActionTypes.POST_COMMENT_CHANGE,
 });
 
+const updatePostCommentsLoading = () => ({
+    type: ActionTypes.UPDATE_POST_COMMENT_LOADING,
+});
+
+const updatePostCommentsSuccess = (data) => ({
+    type: ActionTypes.UPDATE_POST_COMMENT_SUCCESS,
+    payload: data
+});
+
+const updatePostCommentsFailed = (errmess) => ({
+    type: ActionTypes.UPDATE_POST_COMMENT_FAILED,
+    payload: errmess
+});
+
 export const updatePostComments = (comment, commetId) => (dispatch) => {
+    dispatch(updatePostCommentsLoading());
     
     axios.patch(baseUrl + `/comment_api/post_comment_create/${commetId}/`, comment,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updatePostCommentsSuccess(res.data));
         dispatch(postcommentChange());
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updatePostCommentsFailed(error));
     })
 }
 
 export const createPostComments = (comment) => (dispatch) => {
+    dispatch(updatePostCommentsLoading());
     
     axios.post(baseUrl + `/comment_api/post_comment_create/`, comment,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updatePostCommentsSuccess(res.data));
         dispatch(postcommentChange());
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updatePostCommentsFailed(error));
     })
 }
 
 export const deletePostComments = (commentId) => (dispatch) => {
+    dispatch(updatePostCommentsLoading());
     
     axios.delete(baseUrl + `/comment_api/post_comment_create/${commentId}/`,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updatePostCommentsSuccess(res.data));
         dispatch(postcommentChange());
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updatePostCommentsFailed(error));
     })
 }
 
@@ -1147,11 +1133,9 @@ export const fetchAnswerComments = (id) => (dispatch) => {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
         dispatch(addAnswerComments(res.data));
     })
     .catch(error => {
-        console.log(error);
         dispatch(answerCommentsFailed(error));
     });
 }
@@ -1162,7 +1146,6 @@ export const fetchAnswerCommentsDirect = (answerId, handleComments) => (dispatch
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
         handleComments(res.data);
     })
     .catch(error => {
@@ -1189,48 +1172,65 @@ export const answercommentChange = () => ({
     type: ActionTypes.ANSWER_COMMENT_CHANGE,
 });
 
+const updateAnswerCommentsLoading = () => ({
+    type: ActionTypes.UPDATE_ANSWER_COMMENT_LOADING,
+});
+
+const updateAnswerCommentsSuccess = (data) => ({
+    type: ActionTypes.UPDATE_ANSWER_COMMENT_SUCCESS,
+    payload: data
+});
+
+const updateAnswerCommentsFailed = (errmess) => ({
+    type: ActionTypes.UPDATE_ANSWER_COMMENT_FAILED,
+    payload: errmess
+});
+
 export const updateAnswerComments = (comment, commetId) => (dispatch) => {
+    dispatch(updateAnswerCommentsLoading());
     
     axios.patch(baseUrl + `/comment_api/answer_comment_create/${commetId}/`, comment,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateAnswerCommentsSuccess(res.data));
         dispatch(answercommentChange());
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateAnswerCommentsFailed(error));
     })
 }
 
 export const createAnswerComments = (comment) => (dispatch) => {
+    dispatch(updateAnswerCommentsLoading());
     
     axios.post(baseUrl + `/comment_api/answer_comment_create/`, comment,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateAnswerCommentsSuccess(res.data));
         dispatch(answercommentChange());
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateAnswerCommentsFailed(error));
     })
 }
 
 export const deleteAnswerComments = (commentId) => (dispatch) => {
+    dispatch(updateAnswerCommentsLoading());
     
     axios.delete(baseUrl + `/comment_api/answer_comment_create/${commentId}/`,
     {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateAnswerCommentsSuccess(res.data));
         dispatch(answercommentChange());
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateAnswerCommentsFailed(error));
     })
 }
 
@@ -1242,11 +1242,9 @@ export const fetchUserProfile = (token, currentUserId) => (dispatch) => {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
         dispatch(addUserProfile(res));
     })
     .catch(error => {
-        console.log(error);
         dispatch(userProfileFailed(error));
     })
 }
@@ -1266,6 +1264,8 @@ export const addUserProfile = (user) => ({
 });
 
 export const updateUserProfile = (auth, aboutMe) => (dispatch) => {
+    dispatch(updateUserLoading());
+
     axios.patch(baseUrl + `/users/${auth.currentUser}/`, {
         user: auth.currentUserId,
         aboutMe: aboutMe,
@@ -1274,10 +1274,10 @@ export const updateUserProfile = (auth, aboutMe) => (dispatch) => {
         "headers": localStorage.getItem('token') ? {Authorization: "JWT " + localStorage.getItem('token')}: undefined
     })
     .then(res => {
-        console.log(res);
+        dispatch(updateUserSuccess(res.data));
     })
     .catch(error => {
-        console.log(error);
+        dispatch(updateUserFailed(error));
     })
 }
 
@@ -1292,7 +1292,6 @@ export const fetchAnswers = (postId, ordering, answerId) => (dispatch) => {
         dispatch(addAnswers(answers.data));
     })
     .catch(error => {
-        console.log(error);
         dispatch(answersFailed(error));
     });
 }
@@ -1307,7 +1306,6 @@ export const fetchAnswersForPagination = (postId, ordering, pageNum) => (dispatc
         dispatch(addAnswers(answers.data))
     )
     .catch(error => {
-        console.log(error);
         dispatch(answersFailed(error));
     });
 }
@@ -1344,7 +1342,21 @@ export const answerUpdated = (data) => ({
     payload: data
 });
 
+export const answerCreatedLoading = () => ({
+    type: ActionTypes.ANSWER_CREATED_LOADING,
+});
+
+export const answerDeletedLoading = () => ({
+    type: ActionTypes.ANSWER_DELETED_LOADING,
+});
+
+export const answerUpdatedLoading = () => ({
+    type: ActionTypes.ANSWER_UPDATED_LOADING,
+});
+
 export const postAnswer = (postBelong, owner, answerContent) => (dispatch) => {
+    dispatch(answerCreatedLoading());
+
     axios.post(baseUrl + `/answer_api/answer/create/`, {
         postBelong: postBelong,
         owner: owner,
@@ -1355,17 +1367,17 @@ export const postAnswer = (postBelong, owner, answerContent) => (dispatch) => {
         //dispatch(fetchAnswers(postBelong));
     })
     .catch(error => {
-        console.log(error);
         dispatch(answersFailed(error));
     });
 }
 
 export const updateAnswer = (id, postBelong, answerContent) => (dispatch) => {
+    dispatch(answerUpdatedLoading());
+    
     axios.patch(baseUrl + `/answer_api/answer/${id}/update/`, {
         answerContent,
     }, headerWithToken)
     .then(response => {
-        console.log(response);
         dispatch(answerUpdated(JSON.parse(response.data)[0].pk));
         //dispatch(fetchAnswers(postBelong));
     })
@@ -1375,6 +1387,8 @@ export const updateAnswer = (id, postBelong, answerContent) => (dispatch) => {
 }
 
 export const deleteAnswer = (id, postBelong) => (dispatch) => {
+    dispatch(answerDeletedLoading());
+    
     axios.delete(baseUrl + `/answer_api/answer/${id}/delete/`, headerWithToken)
     .then(response => {
         dispatch(answerDeleted());
@@ -1391,12 +1405,10 @@ export const fetchAnswerVotes = (answerId, voteType) => async (dispatch) => {
 
     axios.get(baseUrl + `/vote_api/answervote/?answer=${answerId}&voteType=${voteType}`)
     .then(response => {
-        console.log(response);
         return response;
     })
     .then(votes => dispatch(addAnswerVotes(votes.data)))
     .catch(error => {
-        console.log(error);
         dispatch(answerVotesFailed(error));
     });
 }
@@ -1406,12 +1418,10 @@ export const fetchAnswerVotesByLoggedInUser = (owner, answer) => (dispatch) => {
 
     axios.get(baseUrl + `/vote_api/answervote/?owner=${owner}&answer=${answer}`)
     .then(response => {
-        console.log(response.data);
         dispatch(addAnswerVotes(response.data));
         return response;
     })
     .catch(error => {
-        console.log(error);
         dispatch(answerVotesFailed());
     });
 }
@@ -1441,7 +1451,7 @@ export const postAnswerVote = (answer, voteType, owner) => (dispatch) => {
         owner
     }, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("voted");
     })
     .catch(error => {
         console.log(error);
@@ -1454,7 +1464,7 @@ export const updateAnswerVote = (answer, newVoteType, owner) => (dispatch) => {
         voteType: newVoteType,
     }, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("updated vote");
     })
     .catch(error => {
         console.log(error);
@@ -1464,7 +1474,7 @@ export const updateAnswerVote = (answer, newVoteType, owner) => (dispatch) => {
 export const deleteAnswerVote = (answer, voteType, owner) => (dispatch) => {
     axios.delete(baseUrl + `/vote_api/answervote/vote/answer=${answer}&voteType=${voteType}&owner=${owner}/delete/`, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("updated vote");
     })
     .catch(error => {
         console.log(error);
@@ -1477,12 +1487,10 @@ export const fetchAnswerCommentVotes = (commentId, voteType) => async (dispatch)
 
     axios.get(baseUrl + `/vote_api/answercommentvote/?comment=${commentId}&voteType=${voteType}`)
     .then(response => {
-        console.log(response);
         return response;
     })
     .then(votes => dispatch(addAnswerCommentVotes(votes.data)))
     .catch(error => {
-        console.log(error);
         dispatch(answerCommentVotesFailed(error));
     });
 }
@@ -1492,12 +1500,10 @@ export const fetchAnswerCommentVotesByLoggedInUser = (owner, comment) => (dispat
 
     axios.get(baseUrl + `/vote_api/answercommentvote/?owner=${owner}&comment=${comment}`)
     .then(response => {
-        console.log(response.data);
         dispatch(addAnswerCommentVotes(response.data));
         return response;
     })
     .catch(error => {
-        console.log(error);
         dispatch(answerCommentVotesFailed());
     });
 }
@@ -1527,7 +1533,7 @@ export const postAnswerCommentVote = (comment, voteType, owner) => (dispatch) =>
         owner
     }, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("voted");
     })
     .catch(error => {
         console.log(error);
@@ -1540,7 +1546,7 @@ export const updateAnswerCommentVote = (comment, newVoteType, owner) => (dispatc
         voteType: newVoteType,
     }, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("voted");
     })
     .catch(error => {
         console.log(error);
@@ -1550,7 +1556,7 @@ export const updateAnswerCommentVote = (comment, newVoteType, owner) => (dispatc
 export const deleteAnswerCommentVote = (comment, voteType, owner) => (dispatch) => {
     axios.delete(baseUrl + `/vote_api/answercommentvote/vote/answer=${comment}&voteType=${voteType}&owner=${owner}/delete/`, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("voted");
     })
     .catch(error => {
         console.log(error);
@@ -1563,12 +1569,10 @@ export const fetchPostVotes = (postId, voteType) => async (dispatch) => {
 
     axios.get(baseUrl + `/vote_api/postvote/?post=${postId}&voteType=${voteType}`)
     .then(response => {
-        console.log(response);
         return response;
     })
     .then(votes => dispatch(addPostVotes(votes.data)))
     .catch(error => {
-        console.log(error);
         dispatch(postVotesFailed(error));
     });
 }
@@ -1578,12 +1582,10 @@ export const fetchPostVotesByLoggedInUser = (owner, post) => (dispatch) => {
 
     axios.get(baseUrl + `/vote_api/postvote/?owner=${owner}&post=${post}`)
     .then(response => {
-        console.log(response.data);
         dispatch(addPostVotes(response.data));
         return response;
     })
     .catch(error => {
-        console.log(error);
         dispatch(postVotesFailed());
     });
 }
@@ -1613,7 +1615,7 @@ export const postPostVote = (post, voteType, owner) => (dispatch) => {
         owner
     }, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("voted");
     })
     .catch(error => {
         console.log(error);
@@ -1626,7 +1628,7 @@ export const updatePostVote = (post, newVoteType, owner) => (dispatch) => {
         voteType: newVoteType,
     }, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("voted");
     })
     .catch(error => {
         console.log(error);
@@ -1636,7 +1638,7 @@ export const updatePostVote = (post, newVoteType, owner) => (dispatch) => {
 export const deletePostVote = (post, voteType, owner) => (dispatch) => {
     axios.delete(baseUrl + `/vote_api/postvote/vote/post=${post}&voteType=${voteType}&owner=${owner}/delete/`, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("voted");
     })
     .catch(error => {
         console.log(error);
@@ -1649,12 +1651,10 @@ export const fetchPostCommentVotes = (commentId, voteType) => async (dispatch) =
 
     axios.get(baseUrl + `/vote_api/postcommentvote/?comment=${commentId}&voteType=${voteType}`)
     .then(response => {
-        console.log(response);
         return response;
     })
     .then(votes => dispatch(addPostCommentVotes(votes.data)))
     .catch(error => {
-        console.log(error);
         dispatch(postCommentVotesFailed(error));
     });
 }
@@ -1664,12 +1664,10 @@ export const fetchPostCommentVotesByLoggedInUser = (owner, comment) => (dispatch
 
     axios.get(baseUrl + `/vote_api/postcommentvote/?owner=${owner}&comment=${comment}`)
     .then(response => {
-        console.log(response.data);
         dispatch(addPostCommentVotes(response.data));
         return response;
     })
     .catch(error => {
-        console.log(error);
         dispatch(postCommentVotesFailed());
     });
 }
@@ -1699,7 +1697,7 @@ export const postPostCommentVote = (comment, voteType, owner) => (dispatch) => {
         owner
     }, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("voted");
     })
     .catch(error => {
         console.log(error);
@@ -1712,7 +1710,7 @@ export const updatePostCommentVote = (comment, newVoteType, owner) => (dispatch)
         voteType: newVoteType,
     }, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("voted");
     })
     .catch(error => {
         console.log(error);
@@ -1722,7 +1720,7 @@ export const updatePostCommentVote = (comment, newVoteType, owner) => (dispatch)
 export const deletePostCommentVote = (comment, voteType, owner) => (dispatch) => {
     axios.delete(baseUrl + `/vote_api/postcommentvote/vote/comment=${comment}&voteType=${voteType}&owner=${owner}/delete/`, headerWithToken)
     .then(response => {
-        console.log(response);
+        console.log("voted");
     })
     .catch(error => {
         console.log(error);
@@ -1736,12 +1734,10 @@ export const fetchNotifications = (recipient) => async (dispatch) => {
 
     axios.get(baseUrl + `/inbox/notifications/?recipient=${recipient}`, headerWithToken)
     .then(response => {
-        console.log(response);
         return response;
     })
     .then(votes => dispatch(addNotifications(votes.data)))
     .catch(error => {
-        console.log(error);
         dispatch(notificationsFailed(error));
     });
 }
@@ -1749,7 +1745,7 @@ export const fetchNotifications = (recipient) => async (dispatch) => {
 export const deleteNotifications = (id) => (dispatch) => {
     axios.delete(baseUrl + `/inbox/notifications/${id}/`, headerWithToken)
     .then(res => {
-        console.log(res);
+        console.log("notifications deleted");
         dispatch(fetchUnreadNotifications(localStorage.getItem("currentUserId")));
     })
     .catch(error => {
@@ -1762,7 +1758,6 @@ export const patchNotifications = (id, unread) => (dispatch) => {
         unread
     }, headerWithToken)
     .then(res => {
-        console.log(res);
         dispatch(fetchUnreadNotifications(localStorage.getItem("currentUserId")));
     })
     .catch(error => {

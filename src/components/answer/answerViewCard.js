@@ -8,13 +8,12 @@ import VoteButtons from '../vote/answerVoteButtons';
 import { AnswerCommentInput, AnswerCommentRender } from './comment/comment';
 import { EditorState } from 'draft-js';
 import { createAnswerComments } from '../../redux/ActionCreators';
-import { useParams } from 'react-router-dom';
 
 export default function AnswerViewCard({answer, handleModalOpen, handleDeleteModalOpen}) {
 
     const classes = useStyles();
 
-    const { postId } = useParams();
+    //const { postId } = useParams();
 
     const dispatch = useDispatch();
 
@@ -41,7 +40,7 @@ export default function AnswerViewCard({answer, handleModalOpen, handleDeleteMod
         }
         setEditorState(() => EditorState.createEmpty());
         setSubmitVal({});
-    }, [dispatch, postId]);
+    }, [dispatch]);
 
     return(
         <React.Fragment>
